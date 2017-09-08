@@ -1,7 +1,7 @@
 import numpy as np
 import cv2
-from time import sleep
-import math
+from time import sleep, clock
+from math import pow, atan
 #import fitEllipse
 from playsound import playsound
 from matplotlib import pyplot as plt
@@ -407,28 +407,24 @@ def jouer_old(img):
     Edited = cv2.imread("B.jpg")
     blank = np.zeros((720,1280,3), np.uint8)
     blank[:,:] = (255,255,255)
-    orb1,kp1,des1=dodo(Original,blank)
-    orb2,kp2,des2=dodo(Edited,blank)
-    
-    print len(des1)
-    print len(des2)
-    
+    orb1,kp1,des1=dodo(Original,Original)
+    orb2,kp2,des2=dodo(Edited,Edited)
+    #print len(des1)
+    #print len(des2)
     cv2.imwrite("orb1.jpg", orb1)
     cv2.imwrite("orb2.jpg", orb2)
     diff2 = cv2.subtract(orb1, orb2)
     cv2.imwrite("orb_diff.jpg", diff2)
-
-
     bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
     matches = bf.match(des1,des2)
     matches = sorted(matches, key = lambda x:x.distance)
     print "j"
     print len(matches)
-
     #for c in cercles:
      #   cv2.circle(warp,c.center,c.radius,colors[c.color],1)
     cv2.imshow('jeu',warp)
-    draw_matches(Original,kp1,Edited,kp2,matches,(250,12,12))
+    return kp1,kp2
+    #draw_matches(Original,kp1,Edited,kp2,matches,(250,12,12))
     
 def ouvrir_camera():
     global img_h, img_w, img_chs
@@ -482,22 +478,26 @@ pts_cadre=[[-1,-1],[-1,-1],[-1,-1],[-1,-1]]
 pts_cadre_o = None
 #np.zeros((4, 2), dtype = "float32")
 pts_lines = None
+fleches=[]
+kplen0=0
 cercles=[cercle()]
 c_i=0
 colors=[(250,22,122),(22,122,250),(122,250,22),(250,122,22),(122,22,250),(22,250,122)]
+########
 souris_x=1
 souris_y=1
+########
 recadre=False
 cible=False
 ellipse=False
-mode_gray = True
+mode_gray = False
 action='recadrer'
 ####################################
 cap = cv2.VideoCapture(0)
 cv2.namedWindow('primi')
 cv2.setMouseCallback('primi',get_coords)
 
-img2=ouvrir_camera()
+img2,kp1,kp2=ouvrir_camera()
 
 cv2.imwrite("img.png",img2)
 img2 = cv2.cvtColor(img2, cv2.COLOR_BGR2GRAY)
