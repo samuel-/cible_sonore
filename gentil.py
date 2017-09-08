@@ -228,35 +228,40 @@ def fuse(kp, d):
     taken = [False] * n
     for i in range(n):
         if not taken[i]:
-##            count = 1
-##            new_size = kp[i].size
+################
+            count = 1
+            new_size = kp[i].size
+            new_kp = kp[i]
+            new_x,new_y = new_kp.pt[0]*new_size, new_kp.pt[1]*new_size
+            taken[i] = True
+            for j in range(i+1, n):
+                if dist2(kp[i].pt, kp[j].pt) < d2:
+                    new_x += kp[j].pt[0]*kp[j].size
+                    new_y += kp[j].pt[1]*kp[j].size
+                    count += 1
+                    new_size += kp[j].size
+                    taken[j] = True
+            new_x /= float(new_size)
+            new_y /= float(new_size)
+            new_kp.pt = (new_x,new_y)
+            new_kp.size = new_size / float(count)
+##################            
+##            count = 1.
 ##            new_kp = kp[i]
 ##            new_x,new_y = new_kp.pt
 ##            taken[i] = True
 ##            for j in range(i+1, n):
 ##                if dist2(kp[i].pt, kp[j].pt) < d2:
-##                    new_x += kp[j].pt[0]*kp[j].size
-##                    new_y += kp[j].pt[1]*kp[j].size
+##                    new_x += kp[j].pt[0]
+##                    new_y += kp[j].pt[1]
 ##                    count += 1
-##                    new_size += kp[j].size
 ##                    taken[j] = True
-##            new_x /= (float(count)*float(new_size))
-##            new_y /= (float(count)*float(new_size))
+##            new_x /= count
+##            new_y /= count
 ##            new_kp.pt = (new_x,new_y)
-##            new_kp.size = new_size / float(count)
-            count = 1.
-            new_kp = kp[i]
-            new_x,new_y = new_kp.pt
-            taken[i] = True
-            for j in range(i+1, n):
-                if dist2(kp[i].pt, kp[j].pt) < d2:
-                    new_x += kp[j].pt[0]
-                    new_y += kp[j].pt[1]
-                    count += 1
-                    taken[j] = True
-            new_x /= count
-            new_y /= count
-            new_kp.pt = (new_x,new_y)
+##################"
+
+            
             ret.append(new_kp)
     return ret
 
