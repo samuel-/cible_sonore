@@ -268,19 +268,57 @@ def fuse(kp, d):
 ##            new_x /= count
 ##            new_y /= count
 ##            new_kp.pt = (new_x,new_y)
-##################"
-
-            
+##################
             ret.append(new_kp)
     return ret
 
 
+def extract(kp1,kp2,d=50):
+    #kp1=fuse(kp1,d)
+    #kp2=fuse(kp2,d)
+    kp=kp1+kp2
+    ret = []
+    d2 = d * d 
+    n = len(kp2)
+    for i,k2 in enumerate(kp2):
+        keep_it = True
+        for j,k1 in enumerate(kp1):
+            if dist2(k2.pt, k1.pt) < d2:
+                keep_it = False
+        if keep_it :
+            ret.append(kp[i])
+    if ret==[]:
+        print "nvlle fleche non trouvee"
+        return False
+    elif len(ret)>1:
+        print "trouve trop de points pour la nouvelle fleche"
+        return False
+    elif len(ret)==1:
+        print ret[0].pt
+        return ret[0].pt
+
+def tableau():
+    global fleches
+    score_tot = 0
+    for f,fleche in enumerate(fleches):
+        print f,fleche.score,fleche.pt
+        score_tot += fleche.score
+    print "score total"
+    print score_tot
+
 def jouer(img):
-    oldwarp=None
+    global fleches
+    global kplen0
+    #oldwarp=None
     warp = transform(img,pts_cadre_o,600,600)
-    mode_gray=False
+    oldwarp=warp
+    _,kp_0,_=dodo(warp,warp)
+    kplen0 = len(kp_0)
+    mode=3
+    timer=0
     while True:
-        oldwarp=warp
+        if len(fleches)==0 or (clock()-fleches[-1].time)>3:
+            oldwarp=warp
         #cv2.imwrite("A.jpg",oldwarp)
         ret=False
         sleep(0.5)
@@ -288,37 +326,55 @@ def jouer(img):
             ret, img2 = cap.read()
         warp = transform(img2,pts_cadre_o,600,600)
         #cv2.imwrite("B.jpg",warp)
-
         Original = oldwarp
         Edited = warp
-        blank = np.zeros((720,1280,3), np.uint8)
-        blank[:,:] = (255,255,255)
+        #blank = np.zeros((720,1280,3), np.uint8)
+        #blank[:,:] = (255,255,255)
         orb1,kp1,des1=dodo(Original,Original)
         orb2,kp2,des2=dodo(Edited,Edited)
-        print (len(kp2)-len(kp1))
-        if (len(kp2)-len(kp1)) != 0:
+        # ?
+        print "len kp1 ", len(kp1)
+        print "len kp2 ", len(kp2)
+        if len(kp1)<kplen0 or len(kp2)<kplen0:
+            continue
+        if len(kp1)>kplen0:
+            timer=clock()
+        if len(kp1)>kplen0 and (clock()-timer)>4 and (clock()-timer)<7:
+            kplen0=len(kp1) ##.....hmm...
+        if len(kp1)==kplen0 and len(kp2)==kplen0+1:
             print "yeeeeeeha !?"
-
+            playsound('sons/velo.wav')
+            fl = extract(kp1,kp2)
+            if fl != False:
+                fleches.append(fleche(fl))
+                tableau()
+                oldwarp=warp
+                kplen0 += 1
+                
         cv2.imwrite("orb1.jpg", orb1)
         cv2.imwrite("orb2.jpg", orb2)
-        #diff2 = cv2.subtract(orb1, orb2)
-        #cv2.imwrite("orb_diff.jpg", diff2)
-        #bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
-        #matches = bf.match(des1,des2)
-        #matches = sorted(matches, key = lambda x:x.distance)
-        #print "j"
-        #print len(matches)
-
         #for c in cercles:
             #cv2.circle(warp,c.center,c.radius,colors[c.color],1)
-        if mode_gray == False:
+        if mode == 0:
             cv2.imshow('jeu',orb2)
-        else:
+        elif mode == 1:
             cv2.imshow('jeu',Edited)
+        elif mode == 2:
+            for c in cercles:
+                cv2.circle(Edited,c.center,c.radius,colors[c.color],1)
+            cv2.imshow('jeu',Edited)
+        elif mode == 3:
+            for c in cercles:
+                cv2.circle(orb2,c.center,c.radius,colors[c.color],1)
+            cv2.imshow('jeu',orb2)
             
         key = cv2.waitKey(33)
-        if key == 2555904 or key == 2424832: # fleches droite gauche
-            mode_gray = not mode_gray
+        if key == 2555904: # fleche droite 
+            if mode<3: mode +=1
+            else: mode=0
+        elif key == 2424832: # fleche gauche
+            if mode>0: mode -=1
+            else: mode=3
         elif key == ord('q'):
             break
 
