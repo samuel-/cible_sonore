@@ -195,7 +195,7 @@ def recadrer(img):
         cv2.imshow('destination',warp)
         cv2.imwrite("warp.png",warp)
 
-def dodo(imI, imO, n_kp=40):
+def dodo(imI, imO, n_kp=100):
     orb = cv2.ORB()
     orb.setInt("nFeatures", n_kp)
     kp = orb.detect(imI,None)
@@ -206,8 +206,8 @@ def dodo(imI, imO, n_kp=40):
     sortie = cv2.drawKeypoints(imO,kp,color=(0,255,0), flags=0)
     return sortie,kp,des
 
-def inside_circle(c,x,y):
-    if pow(x-c.center[0],2)+pow(y-c.center[1],2)>pow(c.radius,2):
+def inside_circle(x,y,c):
+    if pow(x-c.center[0],2)+pow(y-c.center[1],2)<pow(c.radius,2):
         return True
     else:
         return False
