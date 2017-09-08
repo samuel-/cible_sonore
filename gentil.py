@@ -1,12 +1,49 @@
 import numpy as np
 import cv2
 from time import sleep
-#import math
+import math
 #import fitEllipse
 from playsound import playsound
+from matplotlib import pyplot as plt
+#https://stackoverflow.com/questions/19375675/simple-way-of-fusing-a-few-close-points
+
 
 def nothing():
     pass
+
+##def draw_matches(img1, kp1, img2, kp2, matches, color=None): 
+##
+##    # We're drawing them side by side.  Get dimensions accordingly.
+##    # Handle both color and grayscale images.
+##    if len(img1.shape) == 3:
+##        new_shape = (max(img1.shape[0], img2.shape[0]), img1.shape[1]+img2.shape[1], img1.shape[2])
+##    elif len(img1.shape) == 2:
+##        new_shape = (max(img1.shape[0], img2.shape[0]), img1.shape[1]+img2.shape[1])
+##    new_img = np.zeros(new_shape, type(img1.flat[0]))  
+##    # Place images onto the new image.
+##    new_img[0:img1.shape[0],0:img1.shape[1]] = img1
+##    new_img[0:img2.shape[0],img1.shape[1]:img1.shape[1]+img2.shape[1]] = img2
+##    
+##    # Draw lines between matches.  Make sure to offset kp coords in second image appropriately.
+##    r = 15
+##    thickness = 2
+##    if color:
+##        c = color
+##    for m in matches:
+##        # Generate random color for RGB/BGR and grayscale images as needed.
+##        if not color: 
+##            c = np.random.randint(0,256,3) if len(img1.shape) == 3 else np.random.randint(0,256)
+##        # So the keypoint locs are stored as a tuple of floats.  cv2.line(), like most other things,
+##        # wants locs as a tuple of ints.
+##        end1 = tuple(np.round(kp1[m.queryIdx].pt).astype(int))
+##        end2 = tuple(np.round(kp2[m.trainIdx].pt).astype(int) + np.array([img1.shape[1], 0]))
+##        cv2.line(new_img, end1, end2, c, thickness)
+##        cv2.circle(new_img, end1, r, c, thickness)
+##        cv2.circle(new_img, end2, r, c, thickness)
+##    
+##    plt.figure(figsize=(15,15))
+##    plt.imshow(new_img)
+##    plt.show()
 
 def get_coords(event,x,y,flags,param):
     global cadre_souris,pts_cadre
