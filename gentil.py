@@ -225,7 +225,7 @@ def angle_fleche(x,y):
     (dx,dy) = (x-cercles[0].center[0], y-cercles[0].center[1])
     if dx==0:
         dx=0.0001
-    return math.atan(float(y)/float(x))
+    return atan(float(y)/float(x))
 
 def dist2(p1, p2):
     return (p1[0]-p2[0])**2 + (p1[1]-p2[1])**2
