@@ -21,13 +21,19 @@ def color_mouse(event,x,y,flags,param):
     global img, mouse, color
     if event == cv2.EVENT_MOUSEMOVE:
         (mouse[0],mouse[1])=(x,y)
-        if pow(x-c.center[0],2)+pow(y-c.center[1],2)>pow(c.radius,2):
+        if inside_circle(c,x,y):
             color=(0,0,255)
         else:
             color=(255,0,0)
     if event == cv2.EVENT_LBUTTONUP:
         c.set_center(x,y)
 
+
+def inside_circle(c,x,y):
+    if pow(x-c.center[0],2)+pow(y-c.center[1],2)>pow(c.radius,2):
+        return True
+    else:
+        return False
 
 cap = cv2.VideoCapture(0)
 cv2.namedWindow('jeu')
