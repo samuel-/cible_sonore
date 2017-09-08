@@ -27,14 +27,14 @@ while cap.isOpened():
     key = cv2.waitKey(33)
     if key == ord('+') :
         print "..."
-        cap.set(cv2.cv.CV_CAP_OPENNI_DEPTH_GENERATOR_FOCAL_LENGTH,40);
+        cap.set(cv2.cv.CV_CAP_PROP_FOCUS,40);
         print "done"
     elif key == ord('-') :
-        print "..."
-        cap.set(cv2.cv.CV_CAP_OPENNI_DEPTH_GENERATOR_FOCAL_LENGTH,2000);
+        print "restore"
+        cap.set(cv2.cv.CV_CAP_PROP_EXPOSURE,20);
         print "done"
     elif key == 32 :
-        nothing()
+        update()
     elif key == 2555904 or key == 2424832: # fleches droite gauche
         nothing()
 
