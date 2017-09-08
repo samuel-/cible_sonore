@@ -134,18 +134,70 @@ def recadrer(img):
         cv2.imshow('destination',warp)
         cv2.imwrite("warp.png",warp)
 
+def dodo(imI, imO):
+    orb = cv2.ORB()
+    #kp = orb.detect(imI,None)
+    #kp, des = orb.detectAndCompute(imI, kp)
+    kp, des = orb.detectAndCompute(imI, None)
+    sortie = cv2.drawKeypoints(imO,kp,color=(0,255,0), flags=0)
+    return sortie,kp,des
+
 def jouer(img):
     warp = transform(img,pts_cadre_o,600,600)
-    for c in cercles:
-        cv2.circle(warp,c.center,c.radius,colors[c.color],1)
-    cv2.imshow('jeu',warp)
+    while True:
+        ret, img2 = cap.read()
+        if not ret:
+            continue
+        warp = transform(img2,pts_cadre_o,600,600)
+        cv2.imshow('jeu',warp)
+        if cv2.waitKey(1) == ord('s'):
+            break
+    cv2.imwrite("A.jpg",warp)
+    while True:
+        ret, img2 = cap.read()
+        if not ret:
+            continue
+        warp = transform(img2,pts_cadre_o,600,600)
+        cv2.imshow('jeu',warp)
+        if cv2.waitKey(1) == ord('s'):
+            break
+    cv2.imwrite("B.jpg",warp)
+    Original = cv2.imread("A.jpg")
+    Edited = cv2.imread("B.jpg")
+    blank = np.zeros((720,1280,3), np.uint8)
+    blank[:,:] = (255,255,255)
+    orb1,kp1,des1=dodo(Original,blank)
+    orb2,kp2,des2=dodo(Edited,blank)
+    
+    print len(des1)
+    print len(des2)
+    
+    cv2.imwrite("orb1.jpg", orb1)
+    cv2.imwrite("orb2.jpg", orb2)
+    diff2 = cv2.subtract(orb1, orb2)
+    cv2.imwrite("orb_diff.jpg", diff2)
 
+
+    bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
+    matches = bf.match(des1,des2)
+    matches = sorted(matches, key = lambda x:x.distance)
+    print "j"
+    print len(matches)
+
+    #for c in cercles:
+     #   cv2.circle(warp,c.center,c.radius,colors[c.color],1)
+    cv2.imshow('jeu',warp)
+    draw_matches(Original,kp1,Edited,kp2,matches,(250,12,12))
     
 def ouvrir_camera():
     global img_h, img_w, img_chs
     global cible, mode_gray, action
-    cap.set(cv2.cv.CV_CAP_PROP_FRAME_WIDTH, 1280);
-    cap.set(cv2.cv.CV_CAP_PROP_FRAME_HEIGHT, 720);
+    #1920x1080
+    #1600x900
+    #1366x768
+    #1280x720
+    cap.set(cv2.cv.CV_CAP_PROP_FRAME_WIDTH, 1920);
+    cap.set(cv2.cv.CV_CAP_PROP_FRAME_HEIGHT, 1080);
     while cap.isOpened():
         ret, img = cap.read()
         if not ret:
