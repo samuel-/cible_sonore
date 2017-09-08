@@ -343,7 +343,9 @@ def ouvrir_camera():
         if action=='recadrer':
            recadrer(img)
         elif action=='jouer':
-            jouer(img)
+            
+            kp1,kp2=jouer(img)
+            break
 
         key = cv2.waitKey(33)
         if key == ord('+') and cible==False:
@@ -352,9 +354,7 @@ def ouvrir_camera():
             cercles[c_i].radius_down(5)
         elif key == 32 and cible==False: # espace
             print "miiii"
-            cible=True
-            cercles.pop()
-            cv2.destroyAllWindows()
+            valid_cible()
             action='jouer'
         elif key == 2555904 or key == 2424832: # fleches droite gauche
             mode_gray = not mode_gray
@@ -363,7 +363,7 @@ def ouvrir_camera():
         
     cap.release()
     cv2.destroyAllWindows()
-    return img
+    return img,kp1,kp2
 
 img_h=1
 img_w=1
