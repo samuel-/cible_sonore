@@ -132,6 +132,15 @@ class cercle(object):
         if self.radius>5:
             self.radius -= inc
 
+class fleche(object):
+    def __init__(self, pt=(1,1), color=0):
+        self.pt = pt
+        self.color = color
+        self.score = score_fleche(pt[0],pt[1])
+        self.time = clock()
+    def set_center(self,x,y):
+        self.center = (x,y)
+
 def valid_cadre():
     global pts_cadre_o,pts_lines
     pts = np.array(pts_cadre, np.float32)
