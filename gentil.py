@@ -103,6 +103,21 @@ def valid_cadre():
     cv2.namedWindow('destination')
     cv2.setMouseCallback('destination',get_circles)
 
+def valid_cible():
+    global cercles
+    cible=True
+    cercles.pop()
+    cx_list=[]
+    cy_list=[]
+    for i,c in enumerate(cercles):
+        cx_list.append(c.center[0])
+        cy_list.append(c.center[1])
+    cx=int(round(float(sum(cx_list))/float(len(cx_list))))
+    cy=int(round(float(sum(cy_list))/float(len(cy_list))))
+    for _,c in enumerate(cercles):
+        c.center=(cx,cy)
+    cv2.destroyAllWindows()
+
 def recadrer(img):
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     if recadre==False:
