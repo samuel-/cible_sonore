@@ -149,15 +149,134 @@ def recadrer(img):
         cv2.imshow('destination',warp)
         cv2.imwrite("warp.png",warp)
 
-def dodo(imI, imO):
+def dodo(imI, imO, n_kp=40):
     orb = cv2.ORB()
-    #kp = orb.detect(imI,None)
-    #kp, des = orb.detectAndCompute(imI, kp)
-    kp, des = orb.detectAndCompute(imI, None)
+    orb.setInt("nFeatures", n_kp)
+    kp = orb.detect(imI,None)
+    #for i in range(len(kp)):
+    kp = fuse(kp,50)
+    kp, des = orb.compute(imI, kp)
+    #kp, des = orb.detectAndCompute(imI, None)
     sortie = cv2.drawKeypoints(imO,kp,color=(0,255,0), flags=0)
     return sortie,kp,des
 
+def inside_circle(c,x,y):
+    if pow(x-c.center[0],2)+pow(y-c.center[1],2)>pow(c.radius,2):
+        return True
+    else:
+        return False
+    
+def score_fleche(x,y):
+    scores=[100,50,30,20,10,5]
+    score=0
+    for i,c in enumerate(cercles):
+        if inside_circle(x,y,c):
+            score=scores[i]
+            break
+    return score
+
+def angle_fleche(x,y):
+    (dx,dy) = (x-cercles[0].center[0], y-cercles[0].center[1])
+    if dx==0:
+        dx=0.0001
+    return math.atan(float(y)/float(x))
+
+def dist2(p1, p2):
+    return (p1[0]-p2[0])**2 + (p1[1]-p2[1])**2
+
+def fuse(kp, d):
+    ret = []
+    d2 = d * d
+    n = len(kp)
+    taken = [False] * n
+    for i in range(n):
+        if not taken[i]:
+##            count = 1
+##            new_size = kp[i].size
+##            new_kp = kp[i]
+##            new_x,new_y = new_kp.pt
+##            taken[i] = True
+##            for j in range(i+1, n):
+##                if dist2(kp[i].pt, kp[j].pt) < d2:
+##                    new_x += kp[j].pt[0]*kp[j].size
+##                    new_y += kp[j].pt[1]*kp[j].size
+##                    count += 1
+##                    new_size += kp[j].size
+##                    taken[j] = True
+##            new_x /= (float(count)*float(new_size))
+##            new_y /= (float(count)*float(new_size))
+##            new_kp.pt = (new_x,new_y)
+##            new_kp.size = new_size / float(count)
+            count = 1.
+            new_kp = kp[i]
+            new_x,new_y = new_kp.pt
+            taken[i] = True
+            for j in range(i+1, n):
+                if dist2(kp[i].pt, kp[j].pt) < d2:
+                    new_x += kp[j].pt[0]
+                    new_y += kp[j].pt[1]
+                    count += 1
+                    taken[j] = True
+            new_x /= count
+            new_y /= count
+            new_kp.pt = (new_x,new_y)
+            ret.append(new_kp)
+    return ret
+
+
 def jouer(img):
+    oldwarp=None
+    warp = transform(img,pts_cadre_o,600,600)
+    mode_gray=False
+    while True:
+        oldwarp=warp
+        #cv2.imwrite("A.jpg",oldwarp)
+        ret=False
+        sleep(0.5)
+        while not ret:
+            ret, img2 = cap.read()
+        warp = transform(img2,pts_cadre_o,600,600)
+        #cv2.imwrite("B.jpg",warp)
+
+        Original = oldwarp
+        Edited = warp
+        blank = np.zeros((720,1280,3), np.uint8)
+        blank[:,:] = (255,255,255)
+        orb1,kp1,des1=dodo(Original,Original)
+        orb2,kp2,des2=dodo(Edited,Edited)
+        print (len(kp2)-len(kp1))
+        if (len(kp2)-len(kp1)) != 0:
+            print "yeeeeeeha !?"
+
+        cv2.imwrite("orb1.jpg", orb1)
+        cv2.imwrite("orb2.jpg", orb2)
+        #diff2 = cv2.subtract(orb1, orb2)
+        #cv2.imwrite("orb_diff.jpg", diff2)
+        #bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
+        #matches = bf.match(des1,des2)
+        #matches = sorted(matches, key = lambda x:x.distance)
+        #print "j"
+        #print len(matches)
+
+        #for c in cercles:
+            #cv2.circle(warp,c.center,c.radius,colors[c.color],1)
+        if mode_gray == False:
+            cv2.imshow('jeu',orb2)
+        else:
+            cv2.imshow('jeu',Edited)
+            
+        key = cv2.waitKey(33)
+        if key == 2555904 or key == 2424832: # fleches droite gauche
+            mode_gray = not mode_gray
+        elif key == ord('q'):
+            break
+
+    return kp1,kp2
+    #draw_matches(Original,kp1,Edited,kp2,matches,(250,12,12))
+
+
+  
+def jouer_old(img):
     warp = transform(img,pts_cadre_o,600,600)
     while True:
         ret, img2 = cap.read()
