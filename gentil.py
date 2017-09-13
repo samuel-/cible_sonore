@@ -95,6 +95,13 @@ def affiche_corners(image):
             cv2.line(image,(pts_cadre[i][0],pts_cadre[i][1]-5),(pts_cadre[i][0],pts_cadre[i][1]+5), (0,0,255), 1)
             cv2.line(image,(pts_cadre[i][0]-5,pts_cadre[i][1]),(pts_cadre[i][0]+5,pts_cadre[i][1]), (0,0,255), 1)
 
+def affiche_fleches(image):
+    for i,f in enumerate(fleches):
+        (x,y)=int(f.pt[0]),int(f.pt[1])
+        #cv2.circle(image,(x,y), 13, (0,0,255), 1)
+        cv2.line(image,(x,y-5),(x,y+5), (0,0,255), 1)
+        cv2.line(image,(x-5,y),(x+5,y), (0,0,255), 1)
+
 def order_points(pts):
     # top-left, top-right, bottom-right, bottom-left
     rect = np.zeros((4, 2), dtype = "float32")
