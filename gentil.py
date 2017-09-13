@@ -156,17 +156,32 @@ class fleche(object):
     def set_center(self,x,y):
         self.center = (x,y)
 
+class ccible(object):
+    def __init__(self):
+        self.w = 1
+        self.h = 1
+        self.pts_cadre_o = None
+        self.dst = None
+        self.fleches = []
+        self.cercles = [cercle()]
+        self.pts0 = []
+    def setsize(self,s):
+        self.w = s[0]
+        self.h = s[1]
+        self.dst = np.float32([[0,0],[self.w,0],[self.w,self.h],[0,self.h]])
+
 def valid_cadre():
-    global pts_cadre_o,pts_lines
+    global pts_lines,cible
     pts = np.array(pts_cadre, np.float32)
-    pts_cadre_o = order_points(pts)
-    pts_lines=pts_cadre_o.astype(int).reshape((-1,1,2))
+    cible.pts_cadre_o = order_points(pts)
+    pts_lines=cible.pts_cadre_o.astype(int).reshape((-1,1,2))
+    cible.setsize(dest_size(cible.pts_cadre_o,3))
     cv2.namedWindow('destination')
     cv2.setMouseCallback('destination',get_circles)
 
 def valid_cible():
     global cercles
-    cible=True
+    cibleok=True
     cercles.pop()
     cx_list=[]
     cy_list=[]
