@@ -1,12 +1,18 @@
 import numpy as np
 import cv2
 from time import sleep, clock
-from math import pow, atan
+from math import atan, sqrt
 #import fitEllipse
 from playsound import playsound
 from matplotlib import pyplot as plt
 #https://stackoverflow.com/questions/19375675/simple-way-of-fusing-a-few-close-points
 
+img_h=1
+img_w=1
+img_chss=1
+CROPSQUARE = 30
+DOBLSQUARE = 2*CROPSQUARE
+DD=50
 
 def nothing():
     pass
@@ -72,17 +78,17 @@ def get_circles(event,x,y,flags,param):
     #trouver les cercles ?
     global souris_x,souris_y
     global cercles, c_i
-    if event == cv2.EVENT_MOUSEMOVE and cible == False:
+    if event == cv2.EVENT_MOUSEMOVE and cibleok == False:
         souris_x=x
         souris_y=y
         cercles[c_i].set_center(x,y)
-    if event == cv2.EVENT_LBUTTONUP and cible == False:
+    if event == cv2.EVENT_LBUTTONUP and cibleok == False:
         print "next"
         if c_i<4:
             cercles.append(cercle(cercles[c_i].radius+10,c_i+1))
             c_i+=1
             #order_cercles(cercles)
-    if event == cv2.EVENT_RBUTTONUP and cible == False:
+    if event == cv2.EVENT_RBUTTONUP and cibleok == False:
         print "previous"
         if c_i>0:
             c_i-=1
@@ -194,6 +200,7 @@ def valid_cible():
         c.center=(cx,cy)
     cv2.destroyAllWindows()
 
+
 def recadrer(img):
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     if recadre==False:
@@ -210,14 +217,14 @@ def recadrer(img):
             affiche_corners(gray)
             cv2.imshow('primi', gray)
     else:
-        warp = transform(img,pts_cadre_o,600,600)
+        warp = transform(img)
         if mode_gray == False:
             cv2.polylines(img,[pts_lines],True,(0,255,255),1)
             cv2.imshow('primi', img)
         else:
             cv2.polylines(gray,[pts_lines],True,(0,255,255))
             cv2.imshow('primi', gray)
-        if cible==False:
+        if cibleok==False:
             cv2.line(warp,(souris_x,souris_y-5),(souris_x,souris_y+5), (0,0,255), 2)
             cv2.line(warp,(souris_x-5,souris_y),(souris_x+5,souris_y), (0,0,255), 2)
             for c in cercles:
@@ -230,7 +237,7 @@ def dodo(imI, imO, n_kp=100):
     orb.setInt("nFeatures", n_kp)
     kp = orb.detect(imI,None)
     #for i in range(len(kp)):
-    kp = fuse(kp,50)
+    kp = fuse(kp)
     kp, des = orb.compute(imI, kp)
     #kp, des = orb.detectAndCompute(imI, None)
     sortie = cv2.drawKeypoints(imO,kp,color=(0,255,0), flags=0)
@@ -258,9 +265,15 @@ def angle_fleche(x,y):
     return atan(float(y)/float(x))
 
 def dist2(p1, p2):
-    return (p1[0]-p2[0])**2 + (p1[1]-p2[1])**2
+    #print p1
+    #print p2
+    ret = float((p1[0]-p2[0])**2 + (p1[1]-p2[1])**2)
+    return ret
 
-def fuse(kp, d):
+def matcher(kp1, kp2):
+    pass
+
+def fuse(kp, d=DD):
     ret = []
     d2 = d * d
     n = len(kp)
@@ -393,25 +406,22 @@ def tableau():
     print score_tot
 
 def jouer(img):
-    global fleches
+    global fleches,cible
     global kplen0
     #oldwarp=None
-    warp = transform(img,pts_cadre_o,600,600)
+    warp = transform(img)
     oldwarp=warp
     _,kp_0,_=dodo(warp,warp)
     kplen0 = len(kp_0)
     mode=3
-    timer=0
+    #timer=0
     while True:
-        if len(fleches)==0 or (clock()-fleches[-1].time)>3:
-            oldwarp=warp
-        #cv2.imwrite("A.jpg",oldwarp)
+        oldwarp=warp
         ret=False
-        sleep(0.5)
+        sleep(2)
         while not ret:
             ret, img2 = cap.read()
-        warp = transform(img2,pts_cadre_o,600,600)
-        #cv2.imwrite("B.jpg",warp)
+        warp = transform(img2)
         Original = oldwarp
         Edited = warp
         #blank = np.zeros((720,1280,3), np.uint8)
@@ -421,18 +431,22 @@ def jouer(img):
         # ?
         print "len kp1 ", len(kp1)
         print "len kp2 ", len(kp2)
-        if len(kp1)<kplen0 or len(kp2)<kplen0:
-            continue
-        if len(kp1)>kplen0:
-            timer=clock()
-        if len(kp1)>kplen0 and (clock()-timer)>4 and (clock()-timer)<7:
-            kplen0=len(kp1) ##.....hmm...
-        if len(kp1)==kplen0 and len(kp2)==kplen0+1:
-            print "yeeeeeeha !?"
-            playsound('sons/velo.wav')
-            fl = extract(kp1,kp2)
-            if fl != False:
-                fleches.append(fleche(fl))
+        
+        if len(kp1)==len(kp2):
+            tpin, tpout = in_set(kp2,kp_0)
+            print "in set in base zero", tpin, tpout
+            tin,tout=[],[]
+            if tpout != []:
+                tin, tout = in_set(tpout, fleches)
+                print "in set fleches", tin, tout
+            if len(tout)==1:
+                #fl = extract(kp1,kp2)
+                print "yeeeeeeha ?"
+                playsound('sons/velo.wav')
+                #if fl != False:
+                print tout[0]
+                fleches.append(fleche(tout[0].pt))
+                cible.fleches.append(fleche(tout[0].pt))
                 tableau()
                 oldwarp=warp
                 kplen0 += 1
@@ -442,14 +456,18 @@ def jouer(img):
         #for c in cercles:
             #cv2.circle(warp,c.center,c.radius,colors[c.color],1)
         if mode == 0:
+            affiche_fleches(orb2)
             cv2.imshow('jeu',orb2)
         elif mode == 1:
+            affiche_fleches(Edited)
             cv2.imshow('jeu',Edited)
         elif mode == 2:
+            affiche_fleches(Edited)
             for c in cercles:
                 cv2.circle(Edited,c.center,c.radius,colors[c.color],1)
             cv2.imshow('jeu',Edited)
         elif mode == 3:
+            affiche_fleches(orb2)
             for c in cercles:
                 cv2.circle(orb2,c.center,c.radius,colors[c.color],1)
             cv2.imshow('jeu',orb2)
@@ -461,6 +479,10 @@ def jouer(img):
         elif key == 2424832: # fleche gauche
             if mode>0: mode -=1
             else: mode=3
+        elif key == 32:#espace
+            fleches=[]
+            _,kp_0,_=dodo(warp,warp)
+            kplen0 = len(kp_0)
         elif key == ord('q'):
             break
 
@@ -470,12 +492,12 @@ def jouer(img):
 
   
 def jouer_old(img):
-    warp = transform(img,pts_cadre_o,600,600)
+    warp = transform(img)
     while True:
         ret, img2 = cap.read()
         if not ret:
             continue
-        warp = transform(img2,pts_cadre_o,600,600)
+        warp = transform(img2)
         cv2.imshow('jeu',warp)
         if cv2.waitKey(1) == ord('s'):
             break
@@ -484,7 +506,7 @@ def jouer_old(img):
         ret, img2 = cap.read()
         if not ret:
             continue
-        warp = transform(img2,pts_cadre_o,600,600)
+        warp = transform(img2)
         cv2.imshow('jeu',warp)
         if cv2.waitKey(1) == ord('s'):
             break
@@ -537,11 +559,11 @@ def ouvrir_camera():
             break
 
         key = cv2.waitKey(33)
-        if key == ord('+') and cible==False:
+        if key == ord('+') and cibleok==False:
             cercles[c_i].radius_up(5)
-        elif key == ord('-') and cible==False:
+        elif key == ord('-') and cibleok==False:
             cercles[c_i].radius_down(5)
-        elif key == 32 and cible==False: # espace
+        elif key == 32 and cibleok==False: # espace
             print "miiii"
             valid_cible()
             action='jouer'
@@ -554,14 +576,11 @@ def ouvrir_camera():
     cv2.destroyAllWindows()
     return img,kp1,kp2
 
-img_h=1
-img_w=1
-img_chss=1
-CROPSQUARE = 30
-DOBLSQUARE = 2*CROPSQUARE
+
+
 cadre_souris=[-1,-1,-1,-1]
 pts_cadre=[[-1,-1],[-1,-1],[-1,-1],[-1,-1]]
-pts_cadre_o = None
+#pts_cadre_o = None
 #np.zeros((4, 2), dtype = "float32")
 pts_lines = None
 fleches=[]
@@ -574,11 +593,12 @@ souris_x=1
 souris_y=1
 ########
 recadre=False
-cible=False
+cibleok=False
 ellipse=False
 mode_gray = False
 action='recadrer'
 ####################################
+cible=ccible()
 cap = cv2.VideoCapture(0)
 cv2.namedWindow('primi')
 cv2.setMouseCallback('primi',get_coords)
