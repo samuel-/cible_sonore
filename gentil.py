@@ -302,8 +302,64 @@ def fuse(kp, d):
             ret.append(new_kp)
     return ret
 
-
-def extract(kp1,kp2,d=50):
+def in_set(kp,kpset,d=DD,img=None):
+    retin = []
+    retout = []
+    d2 = d * d 
+    n = len(kpset)
+    retin_id=[]
+    temp=[]
+    erreur=True
+    while (erreur):
+        print "tac"
+        erreur=False
+        retin_id=[]
+        for i,k in enumerate(kp):
+            keep_it = False
+            temp=[]
+##            if img!=None:
+##                cv2.circle(img,k.pt,d,colors[0],1)
+##                cv2.imshow('jeu',img)
+            for j,l in enumerate(kpset):
+##                key = cv2.waitKey(33)
+##                while (key != 2555904):
+##                    sleep(0.1)
+##                    key = cv2.waitKey(33)
+                if dist2(k.pt, l.pt) < d2:
+                    print k.pt
+                    print l.pt
+                    keep_it = True
+                    print "1 match"
+                    temp.append(j)
+            if keep_it :
+                if len(temp) == 1:
+                    retin.append(k)
+                    retin_id.append(j)
+                else:
+                    print "erreur: d2 trop grand"
+                    # prendre le plus près !!
+                    erreur = True
+                    break
+            else :
+                retout.append(k)
+        for i,n in enumerate(retin_id):
+            if retin_id.count(n)>1:
+                print "erreur"
+                erreur = True
+                break
+        if erreur :
+            break
+        #    d2 -= 5
+         #   print "ouie..."
+          #  print "new d2",d2
+    
+    print len(retin),len(retout)
+    if erreur :
+        return [],[]
+    else :
+        return retin,retout
+	
+def extract(kp1,kp2,d=DD):
     #kp1=fuse(kp1,d)
     #kp2=fuse(kp2,d)
     kp=kp1+kp2
