@@ -514,7 +514,7 @@ def jouer_old(img):
     
 def ouvrir_camera():
     global img_h, img_w, img_chs
-    global cible, mode_gray, action
+    global mode_gray, action
     #1920x1080
     #1600x900
     #1366x768
