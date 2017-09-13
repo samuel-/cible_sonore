@@ -1,3 +1,6 @@
+# copyright samuel braikeh septembre 2017
+# samuel.braikeh@yahoo.fr
+
 import numpy as np
 import cv2
 from time import sleep, clock
@@ -51,6 +54,44 @@ def nothing():
 ##    plt.imshow(new_img)
 ##    plt.show()
 
+
+class cercle(object):
+    def __init__(self, radius=25,color=0):
+        self.center = (0,0)
+        self.radius = radius
+        self.color = color
+    def set_center(self,x,y):
+        self.center = (x,y)
+    def radius_up(self,inc):
+        if self.radius<800:
+            self.radius += inc
+    def radius_down(self,inc):
+        if self.radius>5:
+            self.radius -= inc
+
+class fleche(object):
+    def __init__(self, pt=(1,1), color=0):
+        self.pt = pt
+        self.color = color
+        self.score = score_fleche(pt[0],pt[1])
+        self.time = clock()
+    def set_center(self,x,y):
+        self.center = (x,y)
+
+class ccible(object):
+    def __init__(self):
+        self.w = 1
+        self.h = 1
+        self.pts_cadre_o = None
+        self.dst = None
+        self.fleches = []
+        self.cercles = [cercle()]
+        self.pts0 = []
+    def setsize(self,s):
+        self.w = s[0]
+        self.h = s[1]
+        self.dst = np.float32([[0,0],[self.w,0],[self.w,self.h],[0,self.h]])
+
 def get_coords(event,x,y,flags,param):
     global cadre_souris,pts_cadre
     global recadre
@@ -93,6 +134,27 @@ def get_circles(event,x,y,flags,param):
         if c_i>0:
             c_i-=1
             cercles.pop()
+
+def inside_circle(x,y,c):
+    if pow(x-c.center[0],2)+pow(y-c.center[1],2)<pow(c.radius,2):
+        return True
+    else:
+        return False
+    
+def score_fleche(x,y):
+    scores=[100,50,30,20,10,5]
+    score=0
+    for i,c in enumerate(cercles):
+        if inside_circle(x,y,c):
+            score=scores[i]
+            break
+    return score
+
+def angle_fleche(x,y):
+    (dx,dy) = (x-cercles[0].center[0], y-cercles[0].center[1])
+    if dx==0:
+        dx=0.0001
+    return atan(float(y)/float(x))
 
 def affiche_corners(image):
     for i in range(4):
@@ -138,43 +200,6 @@ def transform(image):
     M = cv2.getPerspectiveTransform(rect, dst)
     warped = cv2.warpPerspective(image, M, (cible.w, cible.h))
     return warped
-
-class cercle(object):
-    def __init__(self, radius=25,color=0):
-        self.center = (0,0)
-        self.radius = radius
-        self.color = color
-    def set_center(self,x,y):
-        self.center = (x,y)
-    def radius_up(self,inc):
-        if self.radius<800:
-            self.radius += inc
-    def radius_down(self,inc):
-        if self.radius>5:
-            self.radius -= inc
-
-class fleche(object):
-    def __init__(self, pt=(1,1), color=0):
-        self.pt = pt
-        self.color = color
-        self.score = score_fleche(pt[0],pt[1])
-        self.time = clock()
-    def set_center(self,x,y):
-        self.center = (x,y)
-
-class ccible(object):
-    def __init__(self):
-        self.w = 1
-        self.h = 1
-        self.pts_cadre_o = None
-        self.dst = None
-        self.fleches = []
-        self.cercles = [cercle()]
-        self.pts0 = []
-    def setsize(self,s):
-        self.w = s[0]
-        self.h = s[1]
-        self.dst = np.float32([[0,0],[self.w,0],[self.w,self.h],[0,self.h]])
 
 def valid_cadre():
     global pts_lines,cible
@@ -243,35 +268,12 @@ def dodo(imI, imO, n_kp=100):
     sortie = cv2.drawKeypoints(imO,kp,color=(0,255,0), flags=0)
     return sortie,kp,des
 
-def inside_circle(x,y,c):
-    if pow(x-c.center[0],2)+pow(y-c.center[1],2)<pow(c.radius,2):
-        return True
-    else:
-        return False
-    
-def score_fleche(x,y):
-    scores=[100,50,30,20,10,5]
-    score=0
-    for i,c in enumerate(cercles):
-        if inside_circle(x,y,c):
-            score=scores[i]
-            break
-    return score
-
-def angle_fleche(x,y):
-    (dx,dy) = (x-cercles[0].center[0], y-cercles[0].center[1])
-    if dx==0:
-        dx=0.0001
-    return atan(float(y)/float(x))
 
 def dist2(p1, p2):
     #print p1
     #print p2
     ret = float((p1[0]-p2[0])**2 + (p1[1]-p2[1])**2)
     return ret
-
-def matcher(kp1, kp2):
-    pass
 
 def fuse(kp, d=DD):
     ret = []
@@ -339,8 +341,8 @@ def in_set(kp,kpset,d=DD,img=None):
 ##                    sleep(0.1)
 ##                    key = cv2.waitKey(33)
                 if dist2(k.pt, l.pt) < d2:
-                    print k.pt
-                    print l.pt
+                    #print k.pt
+                    #print l.pt
                     keep_it = True
                     print "1 match"
                     temp.append(j)
@@ -372,29 +374,29 @@ def in_set(kp,kpset,d=DD,img=None):
     else :
         return retin,retout
 	
-def extract(kp1,kp2,d=DD):
-    #kp1=fuse(kp1,d)
-    #kp2=fuse(kp2,d)
-    kp=kp1+kp2
-    ret = []
-    d2 = d * d 
-    n = len(kp2)
-    for i,k2 in enumerate(kp2):
-        keep_it = True
-        for j,k1 in enumerate(kp1):
-            if dist2(k2.pt, k1.pt) < d2:
-                keep_it = False
-        if keep_it :
-            ret.append(kp[i])
-    if ret==[]:
-        print "nvlle fleche non trouvee"
-        return False
-    elif len(ret)>1:
-        print "trouve trop de points pour la nouvelle fleche"
-        return False
-    elif len(ret)==1:
-        print ret[0].pt
-        return ret[0].pt
+##def extract(kp1,kp2,d=DD):
+##    #kp1=fuse(kp1,d)
+##    #kp2=fuse(kp2,d)
+##    kp=kp1+kp2
+##    ret = []
+##    d2 = d * d 
+##    n = len(kp2)
+##    for i,k2 in enumerate(kp2):
+##        keep_it = True
+##        for j,k1 in enumerate(kp1):
+##            if dist2(k2.pt, k1.pt) < d2:
+##                keep_it = False
+##        if keep_it :
+##            ret.append(kp[i])
+##    if ret==[]:
+##        print "nvlle fleche non trouvee"
+##        return False
+##    elif len(ret)>1:
+##        print "trouve trop de points pour la nouvelle fleche"
+##        return False
+##    elif len(ret)==1:
+##        print ret[0].pt
+##        return ret[0].pt
 
 def tableau():
     global fleches
@@ -447,10 +449,12 @@ def jouer(img):
                 print tout[0]
                 fleches.append(fleche(tout[0].pt))
                 cible.fleches.append(fleche(tout[0].pt))
-                tableau()
+                #tableau()
                 oldwarp=warp
                 kplen0 += 1
-                
+
+        tableau()
+        
         cv2.imwrite("orb1.jpg", orb1)
         cv2.imwrite("orb2.jpg", orb2)
         #for c in cercles:
@@ -458,19 +462,23 @@ def jouer(img):
         if mode == 0:
             affiche_fleches(orb2)
             cv2.imshow('jeu',orb2)
+            cv2.imwrite("last_im.jpg", orb2)
         elif mode == 1:
             affiche_fleches(Edited)
             cv2.imshow('jeu',Edited)
+            cv2.imwrite("last_im.jpg", Edited)
         elif mode == 2:
             affiche_fleches(Edited)
             for c in cercles:
                 cv2.circle(Edited,c.center,c.radius,colors[c.color],1)
             cv2.imshow('jeu',Edited)
+            cv2.imwrite("last_im.jpg", Edited)
         elif mode == 3:
             affiche_fleches(orb2)
             for c in cercles:
                 cv2.circle(orb2,c.center,c.radius,colors[c.color],1)
             cv2.imshow('jeu',orb2)
+            cv2.imwrite("last_im.jpg", orb2)
             
         key = cv2.waitKey(33)
         if key == 2555904: # fleche droite 
@@ -490,49 +498,49 @@ def jouer(img):
     #draw_matches(Original,kp1,Edited,kp2,matches,(250,12,12))
 
 
-  
-def jouer_old(img):
-    warp = transform(img)
-    while True:
-        ret, img2 = cap.read()
-        if not ret:
-            continue
-        warp = transform(img2)
-        cv2.imshow('jeu',warp)
-        if cv2.waitKey(1) == ord('s'):
-            break
-    cv2.imwrite("A.jpg",warp)
-    while True:
-        ret, img2 = cap.read()
-        if not ret:
-            continue
-        warp = transform(img2)
-        cv2.imshow('jeu',warp)
-        if cv2.waitKey(1) == ord('s'):
-            break
-    cv2.imwrite("B.jpg",warp)
-    Original = cv2.imread("A.jpg")
-    Edited = cv2.imread("B.jpg")
-    blank = np.zeros((720,1280,3), np.uint8)
-    blank[:,:] = (255,255,255)
-    orb1,kp1,des1=dodo(Original,Original)
-    orb2,kp2,des2=dodo(Edited,Edited)
-    #print len(des1)
-    #print len(des2)
-    cv2.imwrite("orb1.jpg", orb1)
-    cv2.imwrite("orb2.jpg", orb2)
-    diff2 = cv2.subtract(orb1, orb2)
-    cv2.imwrite("orb_diff.jpg", diff2)
-    bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
-    matches = bf.match(des1,des2)
-    matches = sorted(matches, key = lambda x:x.distance)
-    print "j"
-    print len(matches)
-    #for c in cercles:
-     #   cv2.circle(warp,c.center,c.radius,colors[c.color],1)
-    cv2.imshow('jeu',warp)
-    return kp1,kp2
-    #draw_matches(Original,kp1,Edited,kp2,matches,(250,12,12))
+##  
+##def jouer_old(img):
+##    warp = transform(img)
+##    while True:
+##        ret, img2 = cap.read()
+##        if not ret:
+##            continue
+##        warp = transform(img2)
+##        cv2.imshow('jeu',warp)
+##        if cv2.waitKey(1) == ord('s'):
+##            break
+##    cv2.imwrite("A.jpg",warp)
+##    while True:
+##        ret, img2 = cap.read()
+##        if not ret:
+##            continue
+##        warp = transform(img2)
+##        cv2.imshow('jeu',warp)
+##        if cv2.waitKey(1) == ord('s'):
+##            break
+##    cv2.imwrite("B.jpg",warp)
+##    Original = cv2.imread("A.jpg")
+##    Edited = cv2.imread("B.jpg")
+##    blank = np.zeros((720,1280,3), np.uint8)
+##    blank[:,:] = (255,255,255)
+##    orb1,kp1,des1=dodo(Original,Original)
+##    orb2,kp2,des2=dodo(Edited,Edited)
+##    #print len(des1)
+##    #print len(des2)
+##    cv2.imwrite("orb1.jpg", orb1)
+##    cv2.imwrite("orb2.jpg", orb2)
+##    diff2 = cv2.subtract(orb1, orb2)
+##    cv2.imwrite("orb_diff.jpg", diff2)
+##    bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
+##    matches = bf.match(des1,des2)
+##    matches = sorted(matches, key = lambda x:x.distance)
+##    print "j"
+##    print len(matches)
+##    #for c in cercles:
+##     #   cv2.circle(warp,c.center,c.radius,colors[c.color],1)
+##    cv2.imshow('jeu',warp)
+##    return kp1,kp2
+##    #draw_matches(Original,kp1,Edited,kp2,matches,(250,12,12))
     
 def ouvrir_camera():
     global img_h, img_w, img_chs
