@@ -118,11 +118,19 @@ def order_points(pts):
     rect[3] = pts[np.argmax(diff)]
     return rect
 
-def transform(image, points, w, h):
-    rect=points
-    dst = np.float32([[0,0],[w,0],[w,h],[0,h]])
+def dest_size(pts,scale):
+	w = sqrt(max(dist2(pts[0],pts[1]), dist2(pts[2],pts[3])))*scale
+	h = sqrt(max(dist2(pts[0],pts[3]), dist2(pts[1],pts[2])))*scale
+	#print w
+	#print h
+	return int(round(w)), int(round(h))
+	
+def transform(image):
+    global cible
+    rect = cible.pts_cadre_o
+    dst = cible.dst
     M = cv2.getPerspectiveTransform(rect, dst)
-    warped = cv2.warpPerspective(image, M, (w, h))
+    warped = cv2.warpPerspective(image, M, (cible.w, cible.h))
     return warped
 
 class cercle(object):
@@ -133,7 +141,7 @@ class cercle(object):
     def set_center(self,x,y):
         self.center = (x,y)
     def radius_up(self,inc):
-        if self.radius<250:
+        if self.radius<800:
             self.radius += inc
     def radius_down(self,inc):
         if self.radius>5:
